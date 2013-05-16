@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
+set -ex
+
 function indent() {
   c='s/^/       /'
   case $(uname) in
@@ -41,14 +43,31 @@ else
 fi
 
 # need to copy the binaries to /app/vendor so that R works
+mkdir -p /app/vendor
 cp -R $VENDOR_DIR/* /app/vendor
 
+mkdir -p /app/.sw
+mkdir -p /app/.apt/etc/apt
+apt-config dump | egrep -v 'Dir ' > /app/.apt/etc/apt/apt.conf
+echo "Dir \"/app/.apt\";" >> /app/.apt/etc/apt/apt.conf
+mkdir -p /app/.apt/var/lib/apt/lists
+cp -a /etc/apt/sources.list* /app/.apt/etc/apt/
+mkdir -p /app/.apt/var/lib/apt/lists/partial
+mkdir -p /app/.apt/var/cache/apt/archives/partial
+apt-get -c "/app/.apt/etc/apt/apt.conf" -y update
+apt-get -c "/app/.apt/etc/apt/apt.conf" -d -y install libcairo2-dev
+for f in $(find /app/.apt/var/cache/apt/archives/ -type f -name '*.deb'); do dpkg-deb -x $f "/app/.sw"; done
+export LD_LIBRARY_PATH=/app/.sw/usr/lib
+export CAIRO_CFLAGS="-I/app/.sw/usr/include/cairo"
+export CAIRO_LIBS="-L/usr/lib"
+
+cp -a /app/.sw $BUILD_DIR/.sw
 
 # R needs to know where gfortran and glibc header files are
 # For buildpacks that get run after, need to update PATH with location of R
-export PATH=/app/vendor/R/bin/:/app/vendor/gcc-4.3/bin:$PATH
-export LDFLAGS="-L/app/vendor/gcc-4.3/lib64/"
-export CPPFLAGS="-I/app/vendor/glibc-2.7/string/ -I/app/vendor/glibc-2.7/time"
+export PATH=/app/vendor/R/bin/:/app/vendor/gcc-4.3/bin:/app/.sw/usr/bin:$PATH
+export LDFLAGS="-L/app/vendor/gcc-4.3/lib64/ -L/app/.sw/usr/lib"
+export CPPFLAGS="-I/app/vendor/glibc-2.7/string/ -I/app/vendor/glibc-2.7/time -I/app/.sw/usr/include"
 export R_INCLUDE=/app/vendor/R/lib64/R/include
 
 # install dependencies from CRAN
