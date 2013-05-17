@@ -28,23 +28,23 @@ CRAN_MIRROR="http://cran.fhcrc.org"
 mkdir -p $CACHE_DIR
 
 # vendor R into the slug
-echo "Vendoring R $R_VERSION" | indent
+# echo "Vendoring R $R_VERSION" | indent
 
-# Check if we can pull from cache rather than download tar
-if [ "$(cat $CACHE_DIR/R/bin/.version 2>/dev/null)" = "$R_VERSION" ]
-then
-  echo "Desired R version ($R_VERSION) cached" | indent
-  mkdir -p $VENDOR_DIR
-  cp -R $CACHE_DIR/* $VENDOR_DIR
-else
-  # download and unpack binaries
-  echo "Downloading and unpacking R binaries" | indent
-  mkdir -p $VENDOR_DIR && curl $R_BINARIES -s -o - | tar xzf - -C $VENDOR_DIR
-fi
+# # Check if we can pull from cache rather than download tar
+# if [ "$(cat $CACHE_DIR/R/bin/.version 2>/dev/null)" = "$R_VERSION" ]
+# then
+#   echo "Desired R version ($R_VERSION) cached" | indent
+#   mkdir -p $VENDOR_DIR
+#   cp -R $CACHE_DIR/* $VENDOR_DIR
+# else
+#   # download and unpack binaries
+#   echo "Downloading and unpacking R binaries" | indent
+#   mkdir -p $VENDOR_DIR && curl $R_BINARIES -s -o - | tar xzf - -C $VENDOR_DIR
+# fi
 
-# need to copy the binaries to /app/vendor so that R works
-mkdir -p /app/vendor
-cp -R $VENDOR_DIR/* /app/vendor
+# # need to copy the binaries to /app/vendor so that R works
+# mkdir -p /app/vendor
+# cp -R $VENDOR_DIR/* /app/vendor
 
 mkdir -p /app/.sw
 mkdir -p /app/.apt/etc/apt
@@ -58,8 +58,8 @@ apt-get -c "/app/.apt/etc/apt/apt.conf" -y update
 apt-get -c "/app/.apt/etc/apt/apt.conf" -d -y install r-cran-cairodevice
 for f in $(find /app/.apt/var/cache/apt/archives/ -type f -name '*.deb'); do dpkg-deb -x $f "/app/.sw"; done
 export LD_LIBRARY_PATH=/app/.sw/usr/lib
-export CAIRO_CFLAGS="-I/app/.sw/usr/include/cairo"
-export CAIRO_LIBS="-L/usr/lib"
+#export CAIRO_CFLAGS="-I/app/.sw/usr/include/cairo"
+#export CAIRO_LIBS="-L/usr/lib"
 
 cp -a /app/.sw $BUILD_DIR/.sw
 
@@ -75,7 +75,7 @@ echo "Executing init.r script" | indent
 mkdir -p /app/vendor/R/lib64/R/doc/html
 
 # set the CRAN mirror and run the init.r program
-/app/vendor/R/bin/R -s --silent <<RPROG
+/app/.sw/usr/bin/R -s --silent <<RPROG
   r <- getOption("repos");
   r["CRAN"] <- "$CRAN_MIRROR";
   options(repos=r);
