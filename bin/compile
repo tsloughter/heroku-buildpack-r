@@ -55,7 +55,7 @@ cp -a /etc/apt/sources.list* /app/.apt/etc/apt/
 mkdir -p /app/.apt/var/lib/apt/lists/partial
 mkdir -p /app/.apt/var/cache/apt/archives/partial
 apt-get -c "/app/.apt/etc/apt/apt.conf" -y update
-apt-get -c "/app/.apt/etc/apt/apt.conf" -d -y install libcairo2-dev
+apt-get -c "/app/.apt/etc/apt/apt.conf" -d -y install r-cran-cairodevice
 for f in $(find /app/.apt/var/cache/apt/archives/ -type f -name '*.deb'); do dpkg-deb -x $f "/app/.sw"; done
 export LD_LIBRARY_PATH=/app/.sw/usr/lib
 export CAIRO_CFLAGS="-I/app/.sw/usr/include/cairo"
